@@ -79,12 +79,10 @@ async def asynchronous():
 
 
 if __name__ == "__main__":
-    #if len(sys.argv) < 2:
-    #    sys.exit("\033[37mUsage: python " + sys.argv[0] + " (Number of threads)")
+    if len(sys.argv) < 2:
+        sys.exit("\033[37mUsage: python " + sys.argv[0] + " (Number of threads)")
 
-    #MAX_CLIENTS = int(sys.argv[1])
-
-    print("Starting threads #" + str(MAX_CLIENTS))
+    MAX_CLIENTS = int(sys.argv[1])
 
     if not os.path.exists(VALID_PATH):
         os.makedirs(VALID_PATH)
