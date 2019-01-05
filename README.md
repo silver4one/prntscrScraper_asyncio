@@ -16,4 +16,4 @@ prntscrScraper asyncio
 
 Пример
 ------------
-     python code.py 15
+     python3.7 code.py 15

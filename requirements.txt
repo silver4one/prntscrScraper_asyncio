@@ -2,5 +2,3 @@ asyncio
 aiohttp
 aiofiles
 aiosqlite
-string
-random
