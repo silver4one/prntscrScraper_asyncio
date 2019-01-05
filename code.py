@@ -4,7 +4,7 @@ import string
 import os, sys
 
 VALID_PATH = "Valid"
-MAX_CLIENTS = 25
+MAX_CLIENTS = 5
 
 async def insert_db(db, picture):
     await db.execute(f"INSERT INTO Generate VALUES (NULL,'{picture}')")
@@ -45,20 +45,27 @@ async def fetch_async(session, db):
 
         await insert_db(db, name)
 
-        async with session.get(printsc) as response:
-            if not response.status == 200 or response.content_length in [0, 503, 4939, 4940, 4941, 12003, 5556]:
-                response.close()
-                print("[-] Invalid: " + name)
-                await insert_invalid(db, name)
-                continue
+        try:
+            async with session.get(printsc) as response:
+                if not response.status == 200 or response.content_length in [0, 503, 4939, 4940, 4941, 12003, 5556]:
+                    response.close()
+                    print("[-] Invalid: " + name)
+                    await insert_invalid(db, name)
+                    continue
 
-            async with aiofiles.open(os.path.join(VALID_PATH, name) + ".jpg", 'wb') as f:
-                async for data in response.content.iter_any():
-                    await f.write(data)
+                async with aiofiles.open(os.path.join(VALID_PATH, name) + ".jpg", 'wb') as f:
+                    async for data in response.content.iter_any():
+                        await f.write(data)
 
-            print("[+] Valid: " + printsc)
-            await insert_valid(db, name)
-        response.close()
+                print("[+] Valid: " + printsc)
+                await insert_valid(db, name)
+            response.close()
+
+        except aiohttp.client_exceptions.ClientConnectorError as err:
+            print(err)
+            await asyncio.sleep(10000)
+            continue
+
         await db.commit()
 
 async def asynchronous():
@@ -69,14 +76,9 @@ async def asynchronous():
         await db.execute('CREATE TABLE if not exists Valid (id INTEGER PRIMARY KEY AUTOINCREMENT, picture)')
         await db.execute('CREATE TABLE if not exists Invalid (id INTEGER PRIMARY KEY AUTOINCREMENT, picture)')
 
-        while True:
-            async with aiohttp.ClientSession() as session:
-                tasks = [asyncio.ensure_future(fetch_async(session, db)) for _ in range(1, MAX_CLIENTS + 1)]
-                await asyncio.gather(*tasks)
-                print("Reload...")
-                await asyncio.sleep(10000)
-                await session.close()
-
+        async with aiohttp.ClientSession() as session:
+            tasks = [asyncio.ensure_future(fetch_async(session, db)) for _ in range(1, MAX_CLIENTS + 1)]
+            await asyncio.gather(*tasks)
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
